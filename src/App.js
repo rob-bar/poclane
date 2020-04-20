@@ -1,46 +1,67 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { mq, breakpoints, colors, easing, shadows } from "./snippets";
-
 const slides = 30; // amount of loaded slides;
 const cardWidth = 352; // width of one card plus its margin;
 const arrowSpace = 160; // is the space left and right for arrows
+const containerWidth = 1040;
 // const margin = 24;
 
-const calculateRange = () => {
+const calculatePageRange = () => {
   return Math.floor((window.innerWidth - arrowSpace) / cardWidth);
 };
 
+const calculateContainerWindowCardDiff = () => {
+  const cardsInContainer = Math.floor(containerWidth / cardWidth);
+  const cardsInWindow = calculatePageRange();
+  return Math.floor((cardsInWindow - cardsInContainer) / 2);
+};
+
+const calculateRestCards = () => {
+  return (slides - calculateContainerWindowCardDiff()) % calculatePageRange();
+};
+
 function App() {
-  // console.log(calculateRange());
+  console.log(calculateContainerWindowCardDiff());
+  console.log(calculatePageRange());
+  console.log(calculateRestCards());
+
   const [page, setPage] = useState(0); // the current page
+  const firstPage = page === 0;
 
-  const prevPage = () => {
-    console.log(page);
-    setPage(page - 1);
-  };
-
-  const nextPage = () => {
-    console.log(page);
-    setPage(page + 1);
-  };
+  const lastPage =
+    page + 1 >=
+    Math.floor(slides / calculatePageRange()) +
+      calculateContainerWindowCardDiff();
 
   return (
     <StyledApp>
       <SwimLane>
-        {page > 0 && (
-          <Icon onClick={prevPage} className="far fa-angle-left fa-3x"></Icon>
-        )}
+        <div>
+          {!firstPage && (
+            <Icon
+              onClick={() => setPage(page - 1)}
+              className="far fa-angle-left fa-3x"
+            ></Icon>
+          )}
+        </div>
         <Container>
-          <Grid page={page}>
+          <Grid page={page} lastPage={lastPage}>
             {[...Array(slides)].map((el, i) => (
-              <Card key={`card${i}`} />
+              <Card key={`card${i}`} color={"white"}>
+                {i + 1}
+              </Card>
             ))}
           </Grid>
         </Container>
-        {page < Math.floor(slides / calculateRange()) && (
-          <Icon onClick={nextPage} className="far fa-angle-right  fa-3x"></Icon>
-        )}
+        <div>
+          {!lastPage && (
+            <Icon
+              onClick={() => setPage(page + 1)}
+              className="far fa-angle-right  fa-3x"
+            ></Icon>
+          )}
+        </div>
       </SwimLane>
     </StyledApp>
   );
@@ -84,8 +105,13 @@ const Grid = styled.div`
   flex-grow: 0;
   flex-shrink: 0;
   transition: transform 1.5s ${easing.expo.out};
-  transform: ${(props) => `translateX(
-    -${props.page * calculateRange() * cardWidth}px
+  transform: ${(props) =>
+    props.lastPage
+      ? `translateX(
+    -${(props.page * calculatePageRange() - calculateRestCards()) * cardWidth}px
+  )`
+      : `translateX(
+    -${props.page * calculatePageRange() * cardWidth}px
   )`};
 
   > * {
@@ -94,12 +120,16 @@ const Grid = styled.div`
 `;
 
 const Card = styled.div`
-  background-color: white;
+  background-color: ${(props) => props.color};
   border-radius: 0.625rem;
   transition: box-shadow 700ms ${easing.expo.out},
     background-color 700ms ${easing.expo.out};
   text-decoration: none;
   width: 14rem;
+  font-size: 5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 22.5rem;
   flex-shrink: 0;
   flex-grow: 0;
@@ -113,7 +143,6 @@ const Card = styled.div`
     box-shadow: none;
 
     &:hover {
-      background-color: ${colors.white};
       ${shadows.depth}
     }
   }
