@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { mq, breakpoints, colors, easing, shadows } from "./snippets";
+import { useBbox } from "./useBox";
 const slides = 30; // amount of loaded slides;
 const cardWidth = 352; // width of one card plus its margin;
 const arrowSpace = 160; // is the space left and right for arrows
@@ -22,17 +23,41 @@ const calculateRestCards = () => {
 };
 
 function App() {
-  console.log(calculateContainerWindowCardDiff());
-  console.log(calculatePageRange());
-  console.log(calculateRestCards());
+  // console.log(calculateContainerWindowCardDiff());
+  // console.log(calculatePageRange());
+  // console.log(calculateRestCards());
 
   const [page, setPage] = useState(0); // the current page
+  const [bbox, ref] = useBbox();
+  // console.log(bbox);
+  const [startTouch, setStartTouch] = useState();
+  const [endTouch, setEndTouch] = useState();
+  const [currentTouch, setCurrentTouch] = useState();
+  // console.log(currentTouch);
   const firstPage = page === 0;
-
   const lastPage =
     page + 1 >=
     Math.floor(slides / calculatePageRange()) +
       calculateContainerWindowCardDiff();
+
+  const onTouchStart = (e) => {
+    const touch = e.touches[0];
+    console.log("onTouchStart" + touch.clientX);
+    setStartTouch(touch.clientX);
+  };
+
+  const onTouchMove = (e) => {
+    // console.log("onTouchMove");
+    setCurrentTouch(bbox.x - e.touches[0].clientX);
+    // console.log(bbox.x);
+    console.log(e.touches[0].clientX);
+  };
+
+  const onTouchEnd = (e) => {
+    const touch = e.changedTouches[0];
+    console.log("onTouchEnd" + touch.clientX);
+    setEndTouch(touch.clientX);
+  };
 
   return (
     <StyledApp>
@@ -46,7 +71,14 @@ function App() {
           )}
         </div>
         <Container>
-          <Grid page={page} lastPage={lastPage}>
+          <Grid
+            page={page}
+            lastPage={lastPage}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            ref={ref}
+          >
             {[...Array(slides)].map((el, i) => (
               <Card key={`card${i}`} color={"white"}>
                 {i + 1}
