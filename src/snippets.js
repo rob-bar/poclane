@@ -7,12 +7,22 @@ export const breakpoints = {
   desktop: "1600px",
   television: "1800px",
   projector: "2560px",
+  fourk: "4000px",
+  sixk: "6000px",
 };
 
 export const mq = {
   minWidth: (bp) => `@media (min-width: ${bp})`,
   hover: (hover) => `@media (hover: ${hover})`,
 };
+
+export const cardQuery = (bp, cards) => {
+  return `${mq.minWidth(bp)} {
+    width: calc((100% - (1.5rem * ${cards - 1})) / ${cards});
+  }`;
+};
+
+export const valueToRem = (pxValue) => `${pxValue / 16}rem`;
 
 export const fontFamily = {
   base: `font-family: "Nunito", sans-serif;`,
