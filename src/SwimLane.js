@@ -24,8 +24,8 @@ const cardQueries = [
   [breakpoints.sixk, 8],
 ];
 
-const calculateContainerWidth = () => {
-  return window.innerWidth - arrowSpace * 2 + cardGutter;
+const calculateContainerWidth = (width) => {
+  return width - arrowSpace * 2 + cardGutter;
 };
 
 const getCardsInView = (width) => {
@@ -41,8 +41,10 @@ const getCardsInView = (width) => {
 //   return Math.floor((cardsInWindow - cardsInContainer) / 2);
 // };
 
-const calculateRestCards = () => {
-  return 0;
+const calculateRestWidth = (restCards, width) => {
+  if (!width) return 0;
+  const cardWidth = width / getCardsInView(width);
+  return cardWidth * restCards;
 };
 
 const SwimLane = ({ slides, color }) => {
@@ -50,20 +52,40 @@ const SwimLane = ({ slides, color }) => {
   // console.log(calculatePageRange());
   // console.log(calculateRestCards());
   const [page, setPage] = useState(0); // the current page
+  const [direction, setDirection] = useState("right");
   const windowWidth = useWindowWidth();
+  let pageWidth = calculateContainerWidth(windowWidth);
+  let restWidth = 0;
+  // console.log(windowWidth);
   // const [bbox, ref] = useBbox();
   // console.log(bbox);
   // const [startTouch, setStartTouch] = useState();
   // const [endTouch, setEndTouch] = useState();
   // const [currentTouch, setCurrentTouch] = useState();
   // console.log(currentTouch);
-  const restCards = slides % getCardsInView(windowWidth);
-  let pageCount = Math.floor(slides / getCardsInView(windowWidth));
+  const restCards = slides % getCardsInView(pageWidth);
+  let pageCount = Math.floor(slides / getCardsInView(pageWidth));
+
   if (restCards) {
     pageCount++;
   }
+  // console.log(page);
+  // if (page === 1 && direction === "left") {
+  //   restWidth = calculateRestWidth(restCards, pageWidth);
+  // }
+
+  // if (pageCount > 1 && page === pageCount - 1 && direction === "right") {
+  //   restWidth = calculateRestWidth(restCards, pageWidth);
+  // }
+
   const firstPage = page === 0;
   const lastPage = page + 1 >= pageCount;
+
+  console.log("restWidth:" + restWidth);
+  // console.log("page:" + page);
+  // console.log("pageCount:" + pageCount);
+  // console.log("second:" + (page === 1));
+  // console.log("secondlast:" + (page + 1 === pageCount));
 
   // const onTouchStart = (e) => {
   //   const touch = e.touches[0];
@@ -83,20 +105,27 @@ const SwimLane = ({ slides, color }) => {
   //   console.log("onTouchEnd" + touch.clientX);
   //   setEndTouch(touch.clientX);
   // };
+  const prevPage = (e) => {
+    setPage(page - 1);
+    setDirection("left");
+  };
+
+  const nextPage = (e) => {
+    setPage(page + 1);
+    setDirection("right");
+  };
 
   return (
     <SwimLaneStyled color={color}>
       {!firstPage && (
-        <Icon
-          onClick={() => setPage(page - 1)}
-          className="far fa-angle-left fa-3x"
-        ></Icon>
+        <Icon onClick={prevPage} className="far fa-angle-left fa-3x"></Icon>
       )}
       <Container>
         <Grid
           page={page}
           lastPage={lastPage}
-          windowWidth={windowWidth}
+          pageWidth={pageWidth}
+          restWidth={restWidth}
           // onTouchStart={onTouchStart}
           // onTouchMove={onTouchMove}
           // onTouchEnd={onTouchEnd}
@@ -110,10 +139,7 @@ const SwimLane = ({ slides, color }) => {
         </Grid>
       </Container>
       {!lastPage && (
-        <Icon
-          onClick={() => setPage(page + 1)}
-          className="far fa-angle-right  fa-3x"
-        ></Icon>
+        <Icon onClick={nextPage} className="far fa-angle-right  fa-3x"></Icon>
       )}
     </SwimLaneStyled>
   );
@@ -178,16 +204,8 @@ const Grid = styled.div`
   display: flex;
   padding: 0 ${valueToRem(arrowSpace)};
   transition: transform 1.5s ${easing.expo.out};
-  transform: ${(props) =>
-    props.lastPage
-      ? `translateX(
-    -${
-      props.page * calculateContainerWidth(props.windowWith) -
-      calculateRestCards(props.windowWith)
-    }px
-  )`
-      : `translateX(
-    -${props.page * calculateContainerWidth(props.windowWith)}px
+  transform: ${(props) => `translateX(
+    -${props.page * props.pageWidth + props.restWidth}px
   )`};
 `;
 
