@@ -3,4 +3,4 @@
 - The slider is set up with empty cards
 - This poc renders multiple cards in the view depending on the screenSize.
 
-[https://jolly-lumiere-1bd40b.netlify.app/](view)
+[view](https://jolly-lumiere-1bd40b.netlify.app/)
