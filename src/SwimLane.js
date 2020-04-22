@@ -15,8 +15,8 @@ import {
 } from "./snippets";
 import { useWindowWidth } from "./useWindowWidth";
 
-const cardGutter = 24; // width of one card plus its margin;
-const arrowSpace = 64; // 4rem is the space left and right for arrows
+const cardGutter = 24;
+const arrowSpace = 64; // the space left and right for arrows (4rem)
 const cardQueries = [
   [breakpoints.zero, 1],
   ["520px", 2],
@@ -39,12 +39,6 @@ const getCardsInView = (width) => {
   return cardQueries[index - 1][1];
 };
 
-// const calculateContainerWindowCardDiff = () => {
-//   const cardsInContainer = Math.floor(containerWidth / cardWidth);
-//   const cardsInWindow = calculatePageRange();
-//   return Math.floor((cardsInWindow - cardsInContainer) / 2);
-// };
-
 const calculateRestWidth = (restCards, width) => {
   if (!width) return 0;
   const cardWidth = width / getCardsInView(width);
@@ -52,23 +46,18 @@ const calculateRestWidth = (restCards, width) => {
 };
 
 const SwimLane = ({ slides, color }) => {
-  // console.log(getCardsInView());
-  // console.log(calculatePageRange());
-  // console.log(calculateRestCards());
-
   const [page, setPage] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
-  const [startTouch, setStartTouch] = useState(0);
-  const [swipeXCoord, setSwipeXCoord] = useState(0);
-  const [direction, setDirection] = useState("right");
-  const windowWidth = useWindowWidth();
-
-  let pageWidth = calculateContainerWidth(windowWidth);
-  let restWidth = 0;
+  const [, setDirection] = useState("right");
 
   const touchThreshold = 200;
+  const [startTouch, setStartTouch] = useState(0);
+  const [swipeXCoord, setSwipeXCoord] = useState(0);
 
-  // const [currentTouch, setCurrentTouch] = useState();
+  const windowWidth = useWindowWidth();
+  const pageWidth = calculateContainerWidth(windowWidth);
+
+  let restWidth = 0;
 
   const restCards = slides % getCardsInView(pageWidth);
   let pageCount = Math.floor(slides / getCardsInView(pageWidth));
@@ -76,19 +65,6 @@ const SwimLane = ({ slides, color }) => {
   if (restCards) {
     pageCount++;
   }
-  // console.log("restWidth:" + restWidth);
-  // console.log("page:" + page);
-  // console.log("pageCount:" + pageCount);
-  // console.log("second:" + (page === 1));
-  // console.log("secondlast:" + (page + 1 === pageCount));
-
-  // if (page === 1 && direction === "left") {
-  //   restWidth = calculateRestWidth(restCards, pageWidth);
-  // }
-
-  // if (pageCount > 1 && page === pageCount - 1 && direction === "right") {
-  //   restWidth = calculateRestWidth(restCards, pageWidth);
-  // }
 
   const firstPage = page === 0;
   const lastPage = page + 1 >= pageCount;
@@ -97,7 +73,6 @@ const SwimLane = ({ slides, color }) => {
     setStartTouch(Math.round(e.clientX || e.touches[0].clientX));
     setIsSwiping(true);
     setSwipeXCoord(-page * calculateContainerWidth(windowWidth));
-    // console.log("onTouchStart: " + startTouch);
   };
 
   const onSwiping = (e) => {
@@ -110,25 +85,21 @@ const SwimLane = ({ slides, color }) => {
 
   const onEndSwipe = (e) => {
     const endTouch = Math.round(e.clientX || e.changedTouches[0].clientX);
+
     setSwipeXCoord(0);
     setIsSwiping(false);
 
     if (!firstPage && startTouch < endTouch) {
       if (endTouch - startTouch >= touchThreshold) {
-        console.log("prevPage");
         prevPage();
       }
     }
 
     if (!lastPage && startTouch > endTouch) {
       if (startTouch - endTouch >= touchThreshold) {
-        console.log("nextPage");
         nextPage();
       }
     }
-
-    // console.log("onTouchStart: " + startTouch);
-    // console.log("onTouchEnd: " + endTouch);
   };
 
   const prevPage = (e) => {
@@ -161,8 +132,6 @@ const SwimLane = ({ slides, color }) => {
           swipeXCoord={swipeXCoord}
           onTouchMove={isSwiping && pageCount > 1 ? onSwiping : undefined}
           onMouseMove={isSwiping && pageCount > 1 ? onSwiping : undefined}
-
-          // ref={ref}
         >
           {[...Array(slides)].map((el, i) => (
             <Card key={`card${i}`} color={"white"}>
@@ -194,10 +163,15 @@ const Icon = styled.i`
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
+  display: none;
 
-  &:hover {
-    &:before {
-      padding: 1rem;
+  ${mq.hover("hover")} {
+    display: flex;
+
+    &:hover {
+      &:before {
+        padding: 1rem;
+      }
     }
   }
 
