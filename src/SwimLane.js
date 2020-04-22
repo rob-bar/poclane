@@ -18,6 +18,7 @@ import { useWindowWidth } from "./useWindowWidth";
 
 const cardGutter = 24;
 const arrowSpace = 64; // the space left and right for arrows (4rem)
+
 const cardQueries = [
   [breakpoints.zero, 1],
   ["520px", 2],
@@ -40,6 +41,16 @@ const getCardsInView = (width) => {
   return cardQueries[index - 1][1];
 };
 
+const getPageCount = (slides, pageWidth) => {
+  let pageCount = Math.floor(slides / getCardsInView(pageWidth));
+
+  if (slides % getCardsInView(pageWidth)) {
+    pageCount++;
+  }
+
+  return pageCount;
+};
+
 const SwimLane = ({ slides, color }) => {
   const [page, setPage] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -51,18 +62,11 @@ const SwimLane = ({ slides, color }) => {
 
   const windowWidth = useWindowWidth();
   const pageWidth = calculateContainerWidth(windowWidth);
+  let pageCount = getPageCount(slides, pageWidth);
 
-  let restWidth = 0;
-
-  const restCards = slides % getCardsInView(pageWidth);
-  let pageCount = Math.floor(slides / getCardsInView(pageWidth));
-
-  if (restCards) {
-    pageCount++;
-  }
-
-  const firstPage = page === 0;
-  const lastPage = page + 1 >= pageCount;
+  const isMultiPaged = pageCount > 1;
+  const isFirstPage = page === 0;
+  const isLastPage = page + 1 >= pageCount;
 
   const onStartSwipe = (e) => {
     setStartTouch(Math.round(e.clientX || e.touches[0].clientX));
@@ -84,13 +88,13 @@ const SwimLane = ({ slides, color }) => {
     setSwipeXCoord(0);
     setIsSwiping(false);
 
-    if (!firstPage && startTouch < endTouch) {
+    if (!isFirstPage && startTouch < endTouch) {
       if (endTouch - startTouch >= touchThreshold) {
         prevPage();
       }
     }
 
-    if (!lastPage && startTouch > endTouch) {
+    if (!isLastPage && startTouch > endTouch) {
       if (startTouch - endTouch >= touchThreshold) {
         nextPage();
       }
@@ -109,24 +113,22 @@ const SwimLane = ({ slides, color }) => {
 
   return (
     <SwimLaneStyled color={color}>
-      {!firstPage && (
+      {!isFirstPage && (
         <Icon onClick={prevPage} className="far fa-angle-left fa-3x"></Icon>
       )}
       <Container
-        onMouseDown={pageCount > 1 ? onStartSwipe : undefined}
-        onTouchStart={pageCount > 1 ? onStartSwipe : undefined}
-        onMouseUp={pageCount > 1 ? onEndSwipe : undefined}
-        onTouchEnd={pageCount > 1 ? onEndSwipe : undefined}
+        onMouseDown={isMultiPaged ? onStartSwipe : undefined}
+        onTouchStart={isMultiPaged ? onStartSwipe : undefined}
+        onMouseUp={isMultiPaged ? onEndSwipe : undefined}
+        onTouchEnd={isMultiPaged ? onEndSwipe : undefined}
       >
         <Grid
           page={page}
-          lastPage={lastPage}
           pageWidth={pageWidth}
-          restWidth={restWidth}
           isSwiping={isSwiping}
           swipeXCoord={swipeXCoord}
-          onTouchMove={isSwiping && pageCount > 1 ? onSwiping : undefined}
-          onMouseMove={isSwiping && pageCount > 1 ? onSwiping : undefined}
+          onTouchMove={isSwiping && isMultiPaged ? onSwiping : undefined}
+          onMouseMove={isSwiping && isMultiPaged ? onSwiping : undefined}
         >
           {[...Array(slides)].map((el, i) => (
             <Card key={`card${i}`} color={"white"}>
@@ -135,7 +137,7 @@ const SwimLane = ({ slides, color }) => {
           ))}
         </Grid>
       </Container>
-      {!lastPage && (
+      {!isLastPage && (
         <Icon onClick={nextPage} className="far fa-angle-right  fa-3x"></Icon>
       )}
     </SwimLaneStyled>
@@ -209,17 +211,17 @@ const Container = styled.div`
 const Grid = styled.div`
   display: flex;
   padding: 0 ${valueToRem(arrowSpace)};
-  transition: ${(props) =>
-    props.isSwiping ? "none" : `transform 1.5s ${easing.expo.out}`};
-  transform: ${(props) =>
-    props.isSwiping
-      ? `translateX(
-    ${props.swipeXCoord}px
-  )`
-      : `translateX(
-    -${props.page * props.pageWidth}px
-  )`};
+  transition: ${(props) => getTransition(props)};
+  transform: translateX(${(props) => getTranslateX(props)}px);
 `;
+
+const getTranslateX = ({ isSwiping, swipeXCoord, page, pageWidth }) => {
+  return isSwiping ? swipeXCoord : -page * pageWidth;
+};
+
+const getTransition = ({ isSwiping }) => {
+  return isSwiping ? "none" : `transform 1.5s ${easing.expo.out}`;
+};
 
 const Card = styled.div`
   background-color: ${(props) => props.color};
