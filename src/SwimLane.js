@@ -56,7 +56,10 @@ const SwimLane = ({ slides, color }) => {
   // console.log(calculatePageRange());
   // console.log(calculateRestCards());
 
-  const [page, setPage] = useState(0); // the current page
+  const [page, setPage] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [startTouch, setStartTouch] = useState(0);
+  const [swipeXCoord, setSwipeXCoord] = useState(0);
   const [direction, setDirection] = useState("right");
   const windowWidth = useWindowWidth();
 
@@ -64,8 +67,8 @@ const SwimLane = ({ slides, color }) => {
   let restWidth = 0;
 
   const touchThreshold = 200;
-  const [startTouch, setStartTouch] = useState();
-  const [currentTouch, setCurrentTouch] = useState();
+
+  // const [currentTouch, setCurrentTouch] = useState();
 
   const restCards = slides % getCardsInView(pageWidth);
   let pageCount = Math.floor(slides / getCardsInView(pageWidth));
@@ -90,35 +93,42 @@ const SwimLane = ({ slides, color }) => {
   const firstPage = page === 0;
   const lastPage = page + 1 >= pageCount;
 
-  const onTouchStart = (e) => {
-    const touch = e.touches[0];
-    console.log("onTouchStart" + touch.clientX);
-    setStartTouch(touch.clientX);
+  const onStartSwipe = (e) => {
+    setStartTouch(Math.round(e.clientX || e.touches[0].clientX));
+    setIsSwiping(true);
+    setSwipeXCoord(-page * calculateContainerWidth(windowWidth));
+    // console.log("onTouchStart: " + startTouch);
   };
 
-  const onTouchMove = (e) => {
-    console.log("onTouchMove");
-    // setCurrentTouch(bbox.x - e.touches[0].clientX);
-    // console.log(bbox.x);
-    console.log(e.touches[0].clientX);
+  const onSwiping = (e) => {
+    setSwipeXCoord(
+      -page * calculateContainerWidth(windowWidth) +
+        (e.clientX || (e.touches && e.touches[0].clientX)) -
+        startTouch
+    );
   };
 
-  const onTouchEnd = (e) => {
-    const touch = e.changedTouches[0];
-    const endTouch = touch.clientX;
-    console.log("onTouchEnd" + touch.clientX);
+  const onEndSwipe = (e) => {
+    const endTouch = Math.round(e.clientX || e.changedTouches[0].clientX);
+    setSwipeXCoord(0);
+    setIsSwiping(false);
 
     if (!firstPage && startTouch < endTouch) {
       if (endTouch - startTouch >= touchThreshold) {
+        console.log("prevPage");
         prevPage();
       }
     }
 
     if (!lastPage && startTouch > endTouch) {
       if (startTouch - endTouch >= touchThreshold) {
+        console.log("nextPage");
         nextPage();
       }
     }
+
+    // console.log("onTouchStart: " + startTouch);
+    // console.log("onTouchEnd: " + endTouch);
   };
 
   const prevPage = (e) => {
@@ -136,15 +146,22 @@ const SwimLane = ({ slides, color }) => {
       {!firstPage && (
         <Icon onClick={prevPage} className="far fa-angle-left fa-3x"></Icon>
       )}
-      <Container>
+      <Container
+        onMouseDown={pageCount > 1 ? onStartSwipe : undefined}
+        onTouchStart={pageCount > 1 ? onStartSwipe : undefined}
+        onMouseUp={pageCount > 1 ? onEndSwipe : undefined}
+        onTouchEnd={pageCount > 1 ? onEndSwipe : undefined}
+      >
         <Grid
           page={page}
           lastPage={lastPage}
           pageWidth={pageWidth}
           restWidth={restWidth}
-          onTouchStart={pageCount > 1 ? onTouchStart : undefined}
-          // onTouchMove={onTouchMove}
-          onTouchEnd={pageCount > 1 ? onTouchEnd : undefined}
+          isSwiping={isSwiping}
+          swipeXCoord={swipeXCoord}
+          onTouchMove={isSwiping && pageCount > 1 ? onSwiping : undefined}
+          onMouseMove={isSwiping && pageCount > 1 ? onSwiping : undefined}
+
           // ref={ref}
         >
           {[...Array(slides)].map((el, i) => (
@@ -219,9 +236,15 @@ const Container = styled.div`
 const Grid = styled.div`
   display: flex;
   padding: 0 ${valueToRem(arrowSpace)};
-  transition: transform 1.5s ${easing.expo.out};
-  transform: ${(props) => `translateX(
-    -${props.page * props.pageWidth + props.restWidth}px
+  transition: ${(props) =>
+    props.isSwiping ? "none" : `transform 1.5s ${easing.expo.out}`};
+  transform: ${(props) =>
+    props.isSwiping
+      ? `translateX(
+    ${props.swipeXCoord}px
+  )`
+      : `translateX(
+    -${props.page * props.pageWidth}px
   )`};
 `;
 
@@ -239,6 +262,7 @@ const Card = styled.div`
   height: 22.5rem;
   flex-shrink: 0;
   flex-grow: 0;
+  user-select: none;
   margin-right: ${valueToRem(cardGutter)};
   ${shadows.depth}
 
