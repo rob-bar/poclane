@@ -74,7 +74,7 @@ const SwimLane = ({ slides, color }) => {
     setSwipeXCoord(-page * calculateContainerWidth(windowWidth));
   };
 
-  const onSwiping = (e) => {
+  const onSwipe = (e) => {
     setSwipeXCoord(
       -page * calculateContainerWidth(windowWidth) +
         (e.clientX || (e.touches && e.touches[0].clientX)) -
@@ -88,17 +88,8 @@ const SwimLane = ({ slides, color }) => {
     setSwipeXCoord(0);
     setIsSwiping(false);
 
-    if (!isFirstPage && startTouch < endTouch) {
-      if (endTouch - startTouch >= touchThreshold) {
-        prevPage();
-      }
-    }
-
-    if (!isLastPage && startTouch > endTouch) {
-      if (startTouch - endTouch >= touchThreshold) {
-        nextPage();
-      }
-    }
+    if (endTouch - startTouch >= touchThreshold && !isFirstPage) prevPage();
+    if (startTouch - endTouch >= touchThreshold && !isLastPage) nextPage();
   };
 
   const prevPage = (e) => {
@@ -117,18 +108,19 @@ const SwimLane = ({ slides, color }) => {
         <Icon onClick={prevPage} className="far fa-angle-left fa-3x"></Icon>
       )}
       <Container
+        onMouseLeave={isSwiping ? () => setIsSwiping(false) : undefined}
         onMouseDown={isMultiPaged ? onStartSwipe : undefined}
         onTouchStart={isMultiPaged ? onStartSwipe : undefined}
         onMouseUp={isMultiPaged ? onEndSwipe : undefined}
         onTouchEnd={isMultiPaged ? onEndSwipe : undefined}
+        onTouchMove={isSwiping && isMultiPaged ? onSwipe : undefined}
+        onMouseMove={isSwiping && isMultiPaged ? onSwipe : undefined}
       >
         <Grid
           page={page}
           pageWidth={pageWidth}
           isSwiping={isSwiping}
           swipeXCoord={swipeXCoord}
-          onTouchMove={isSwiping && isMultiPaged ? onSwiping : undefined}
-          onMouseMove={isSwiping && isMultiPaged ? onSwiping : undefined}
         >
           {[...Array(slides)].map((el, i) => (
             <Card key={`card${i}`} color={"white"}>
@@ -138,7 +130,7 @@ const SwimLane = ({ slides, color }) => {
         </Grid>
       </Container>
       {!isLastPage && (
-        <Icon onClick={nextPage} className="far fa-angle-right  fa-3x"></Icon>
+        <Icon onClick={nextPage} className="far fa-angle-right fa-3x"></Icon>
       )}
     </SwimLaneStyled>
   );
