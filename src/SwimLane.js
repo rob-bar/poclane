@@ -1,4 +1,5 @@
-// TODO => Page to currentCard
+// TODO
+// Refactor Page to currentCard
 // Left => check amount of cards on left page
 // right => check amount of cards on right page
 
@@ -37,12 +38,6 @@ const getCardsInView = (width) => {
     (el) => width < parseInt(el[0].split("px")[0], 10)
   );
   return cardQueries[index - 1][1];
-};
-
-const calculateRestWidth = (restCards, width) => {
-  if (!width) return 0;
-  const cardWidth = width / getCardsInView(width);
-  return cardWidth * restCards;
 };
 
 const SwimLane = ({ slides, color }) => {
@@ -164,11 +159,15 @@ const Icon = styled.i`
   transform: translateY(-50%);
   cursor: pointer;
   display: none;
+  transition: opacity 0.7s ${easing.expo.out};
 
   ${mq.hover("hover")} {
     display: flex;
+    opacity: 0;
 
     &:hover {
+      opacity: 1;
+
       &:before {
         padding: 1rem;
       }
@@ -240,8 +239,6 @@ const Card = styled.div`
   margin-right: ${valueToRem(cardGutter)};
   ${shadows.depth}
 
-  ${cardQueries.map((query) => cardQuery(query[0], query[1]))}
-
   ${mq.hover("hover")} {
     box-shadow: none;
 
@@ -249,6 +246,8 @@ const Card = styled.div`
       ${shadows.depth}
     }
   }
+
+  ${cardQueries.map((query) => cardQuery(query[0], query[1]))}
 `;
 
 export default SwimLane;
