@@ -1,3 +1,7 @@
+// TODO => Page to currentCard
+// Left => check amount of cards on left page
+// right => check amount of cards on right page
+
 import React, { useState } from "react";
 import styled from "styled-components";
 import {
@@ -51,25 +55,30 @@ const SwimLane = ({ slides, color }) => {
   // console.log(getCardsInView());
   // console.log(calculatePageRange());
   // console.log(calculateRestCards());
+
   const [page, setPage] = useState(0); // the current page
   const [direction, setDirection] = useState("right");
   const windowWidth = useWindowWidth();
+
   let pageWidth = calculateContainerWidth(windowWidth);
   let restWidth = 0;
-  // console.log(windowWidth);
-  // const [bbox, ref] = useBbox();
-  // console.log(bbox);
-  // const [startTouch, setStartTouch] = useState();
-  // const [endTouch, setEndTouch] = useState();
-  // const [currentTouch, setCurrentTouch] = useState();
-  // console.log(currentTouch);
+
+  const touchThreshold = 200;
+  const [startTouch, setStartTouch] = useState();
+  const [currentTouch, setCurrentTouch] = useState();
+
   const restCards = slides % getCardsInView(pageWidth);
   let pageCount = Math.floor(slides / getCardsInView(pageWidth));
 
   if (restCards) {
     pageCount++;
   }
-  // console.log(page);
+  // console.log("restWidth:" + restWidth);
+  // console.log("page:" + page);
+  // console.log("pageCount:" + pageCount);
+  // console.log("second:" + (page === 1));
+  // console.log("secondlast:" + (page + 1 === pageCount));
+
   // if (page === 1 && direction === "left") {
   //   restWidth = calculateRestWidth(restCards, pageWidth);
   // }
@@ -81,30 +90,37 @@ const SwimLane = ({ slides, color }) => {
   const firstPage = page === 0;
   const lastPage = page + 1 >= pageCount;
 
-  console.log("restWidth:" + restWidth);
-  // console.log("page:" + page);
-  // console.log("pageCount:" + pageCount);
-  // console.log("second:" + (page === 1));
-  // console.log("secondlast:" + (page + 1 === pageCount));
+  const onTouchStart = (e) => {
+    const touch = e.touches[0];
+    console.log("onTouchStart" + touch.clientX);
+    setStartTouch(touch.clientX);
+  };
 
-  // const onTouchStart = (e) => {
-  //   const touch = e.touches[0];
-  //   console.log("onTouchStart" + touch.clientX);
-  //   setStartTouch(touch.clientX);
-  // };
+  const onTouchMove = (e) => {
+    console.log("onTouchMove");
+    // setCurrentTouch(bbox.x - e.touches[0].clientX);
+    // console.log(bbox.x);
+    console.log(e.touches[0].clientX);
+  };
 
-  // const onTouchMove = (e) => {
-  //   // console.log("onTouchMove");
-  //   setCurrentTouch(bbox.x - e.touches[0].clientX);
-  //   // console.log(bbox.x);
-  //   console.log(e.touches[0].clientX);
-  // };
+  const onTouchEnd = (e) => {
+    const touch = e.changedTouches[0];
+    const endTouch = touch.clientX;
+    console.log("onTouchEnd" + touch.clientX);
 
-  // const onTouchEnd = (e) => {
-  //   const touch = e.changedTouches[0];
-  //   console.log("onTouchEnd" + touch.clientX);
-  //   setEndTouch(touch.clientX);
-  // };
+    if (!firstPage && startTouch < endTouch) {
+      if (endTouch - startTouch >= touchThreshold) {
+        prevPage();
+      }
+    }
+
+    if (!lastPage && startTouch > endTouch) {
+      if (startTouch - endTouch >= touchThreshold) {
+        nextPage();
+      }
+    }
+  };
+
   const prevPage = (e) => {
     setPage(page - 1);
     setDirection("left");
@@ -126,9 +142,9 @@ const SwimLane = ({ slides, color }) => {
           lastPage={lastPage}
           pageWidth={pageWidth}
           restWidth={restWidth}
-          // onTouchStart={onTouchStart}
+          onTouchStart={pageCount > 1 ? onTouchStart : undefined}
           // onTouchMove={onTouchMove}
-          // onTouchEnd={onTouchEnd}
+          onTouchEnd={pageCount > 1 ? onTouchEnd : undefined}
           // ref={ref}
         >
           {[...Array(slides)].map((el, i) => (

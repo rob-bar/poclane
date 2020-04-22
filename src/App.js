@@ -8,7 +8,13 @@ function App() {
     <StyledApp>
       {[...Array(31)].map((el, i) => {
         if (!i) return null;
-        return <SwimLane slides={i} color={uniqolor.random().color} />;
+        return (
+          <SwimLane
+            key={`lane${i}`}
+            slides={i}
+            color={uniqolor.random().color}
+          />
+        );
       })}
     </StyledApp>
   );
