@@ -54,10 +54,10 @@ const getPageCount = (slides, pageWidth) => {
 const SwimLane = ({ slides, color }) => {
   const [page, setPage] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
-  const [, setDirection] = useState("right");
+  // const [, setDirection] = useState("right");
 
   const touchThreshold = 200;
-  const [startTouch, setStartTouch] = useState(0);
+  const [startXCoord, setStartXCoord] = useState(0);
   const [swipeXCoord, setSwipeXCoord] = useState(0);
 
   const windowWidth = useWindowWidth();
@@ -69,37 +69,40 @@ const SwimLane = ({ slides, color }) => {
   const isLastPage = page + 1 >= pageCount;
 
   const onStartSwipe = (e) => {
-    setStartTouch(Math.round(e.clientX || e.touches[0].clientX));
+    e.preventDefault();
+    setStartXCoord(e.clientX || e.touches[0].clientX);
     setIsSwiping(true);
     setSwipeXCoord(-page * calculateContainerWidth(windowWidth));
   };
 
   const onSwipe = (e) => {
+    e.preventDefault();
     setSwipeXCoord(
       -page * calculateContainerWidth(windowWidth) +
         (e.clientX || (e.touches && e.touches[0].clientX)) -
-        startTouch
+        startXCoord
     );
   };
 
   const onEndSwipe = (e) => {
-    const endTouch = Math.round(e.clientX || e.changedTouches[0].clientX);
+    e.preventDefault();
+    const endXCoord = e.clientX || e.changedTouches[0].clientX;
 
     setSwipeXCoord(0);
     setIsSwiping(false);
 
-    if (endTouch - startTouch >= touchThreshold && !isFirstPage) prevPage();
-    if (startTouch - endTouch >= touchThreshold && !isLastPage) nextPage();
+    if (endXCoord - startXCoord >= touchThreshold && !isFirstPage) prevPage();
+    if (startXCoord - endXCoord >= touchThreshold && !isLastPage) nextPage();
   };
 
   const prevPage = (e) => {
     setPage(page - 1);
-    setDirection("left");
+    // setDirection("left");
   };
 
   const nextPage = (e) => {
     setPage(page + 1);
-    setDirection("right");
+    // setDirection("right");
   };
 
   return (
@@ -191,6 +194,7 @@ const Icon = styled.i`
 const SwimLaneStyled = styled.div`
   position: relative;
   padding: 2rem 0;
+  width: 100%;
   background-color: ${(props) => props.color};
 `;
 
