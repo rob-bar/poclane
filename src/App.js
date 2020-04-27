@@ -11,7 +11,7 @@ function App() {
         return (
           <SwimLane
             key={`lane${i}`}
-            slides={i}
+            amountOfCards={i}
             color={uniqolor.random().color}
           />
         );

@@ -34,27 +34,28 @@ const calculateContainerWidth = (width) => {
   return width - arrowSpace * 2 + cardGutter;
 };
 
-const getCardsInView = (width) => {
+const getCardsInPage = (width) => {
   const index = cardQueries.findIndex(
     (el) => width < parseInt(el[0].split("px")[0], 10)
   );
   return cardQueries[index - 1][1];
 };
 
-const getPageCount = (slides, pageWidth) => {
-  let pageCount = Math.floor(slides / getCardsInView(pageWidth));
+const getPageCount = (amountOfCards, pageWidth) => {
+  let pageCount = Math.floor(amountOfCards / getCardsInPage(pageWidth));
 
-  if (slides % getCardsInView(pageWidth)) {
+  if (amountOfCards % getCardsInPage(pageWidth)) {
     pageCount++;
   }
 
   return pageCount;
 };
 
-const SwimLane = ({ slides, color }) => {
+const SwimLane = ({ amountOfCards, color }) => {
   const [page, setPage] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
-  // const [, setDirection] = useState("right");
+  const [restValue, setRestValue] = useState(0);
+  const [noPointerEvents, setNoPointerEvents] = useState(false);
 
   const touchThreshold = 200;
   const [startXCoord, setStartXCoord] = useState(0);
@@ -62,7 +63,7 @@ const SwimLane = ({ slides, color }) => {
 
   const windowWidth = useWindowWidth();
   const pageWidth = calculateContainerWidth(windowWidth);
-  let pageCount = getPageCount(slides, pageWidth);
+  let pageCount = getPageCount(amountOfCards, pageWidth);
 
   const isMultiPaged = pageCount > 1;
   const isFirstPage = page === 0;
@@ -77,6 +78,7 @@ const SwimLane = ({ slides, color }) => {
 
   const onSwipe = (e) => {
     e.preventDefault();
+    setNoPointerEvents(true);
     setSwipeXCoord(
       -page * calculateContainerWidth(windowWidth) +
         (e.clientX || (e.touches && e.touches[0].clientX)) -
@@ -90,19 +92,28 @@ const SwimLane = ({ slides, color }) => {
 
     setSwipeXCoord(0);
     setIsSwiping(false);
+    setIsSwiping(false);
 
     if (endXCoord - startXCoord >= touchThreshold && !isFirstPage) prevPage();
     if (startXCoord - endXCoord >= touchThreshold && !isLastPage) nextPage();
   };
 
-  const prevPage = (e) => {
+  const prevPage = () => {
+    if (amountOfCards % getCardsInPage(pageWidth) && page === 1) {
+      setRestValue(0);
+    }
     setPage(page - 1);
-    // setDirection("left");
   };
 
   const nextPage = (e) => {
+    if (amountOfCards % getCardsInPage(pageWidth) && page + 2 === pageCount) {
+      setRestValue(
+        (pageWidth / getCardsInPage(pageWidth)) *
+          (getCardsInPage(pageWidth) -
+            (amountOfCards % getCardsInPage(pageWidth)))
+      );
+    }
     setPage(page + 1);
-    // setDirection("right");
   };
 
   return (
@@ -124,8 +135,10 @@ const SwimLane = ({ slides, color }) => {
           pageWidth={pageWidth}
           isSwiping={isSwiping}
           swipeXCoord={swipeXCoord}
+          noPointerEvents={noPointerEvents}
+          restValue={restValue}
         >
-          {[...Array(slides)].map((el, i) => (
+          {[...Array(amountOfCards)].map((el, i) => (
             <Card key={`card${i}`} color={"white"}>
               {i + 1}
             </Card>
@@ -204,15 +217,28 @@ const Container = styled.div`
   width: 100%;
 `;
 
-const Grid = styled.div`
+const Grid = styled.div.attrs((props) => ({
+  style: {
+    transform: `translateX(${getTranslateX(props)}px)`,
+    transition: getTransition(props),
+  },
+}))`
   display: flex;
   padding: 0 ${valueToRem(arrowSpace)};
-  transition: ${(props) => getTransition(props)};
-  transform: translateX(${(props) => getTranslateX(props)}px);
+
+  > * {
+    ${(props) => (props.noPointerEvents ? "pointer-events: none;" : "")}
+  }
 `;
 
-const getTranslateX = ({ isSwiping, swipeXCoord, page, pageWidth }) => {
-  return isSwiping ? swipeXCoord : -page * pageWidth;
+const getTranslateX = ({
+  isSwiping,
+  swipeXCoord,
+  page,
+  pageWidth,
+  restValue,
+}) => {
+  return isSwiping ? swipeXCoord + restValue : -page * pageWidth + restValue;
 };
 
 const getTransition = ({ isSwiping }) => {
