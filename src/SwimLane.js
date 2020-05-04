@@ -63,7 +63,7 @@ const SwimLane = ({ amountOfCards, color }) => {
 
   const windowWidth = useWindowWidth();
   const pageWidth = calculateContainerWidth(windowWidth);
-  let pageCount = getPageCount(amountOfCards, pageWidth);
+  let pageCount = getPageCount(amountOfCards, windowWidth);
 
   const isMultiPaged = pageCount > 1;
   const isFirstPage = page === 0;
